@@ -1,13 +1,11 @@
 import express, { request } from 'express';
 import {JWT_SECRET} from '@repo/backend-common/config';
-import { Request } from 'express';
-
+import userrouter from './router.js';
 const app = express();
+app.use(express.json());
+app.use("/api",userrouter);
 
-export interface CustomRequest extends Request {
-    userId?:string;
-}
-app.listen(3000, () => {
-    console.log('HTTP backend is running on port 3000');
-    console.log('JWT_SECRET:', JWT_SECRET);
+
+app.listen(3001, () => {
+    console.log('HTTP backend is running on port 3001');
 });

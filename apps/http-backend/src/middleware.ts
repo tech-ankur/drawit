@@ -1,7 +1,9 @@
-import { NextFunction, Response } from "express";
-import { CustomRequest } from "./index.js";
+import { NextFunction, Response,Request } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
+export interface CustomRequest extends Request {
+    userId?:string;
+}
 export const middleware=(req:CustomRequest,res:Response,next:NextFunction)=>{
 try {
     const token=req.headers["authorization"]||"";
@@ -11,8 +13,9 @@ if(typeof decoded==="string"){
     return res.status(401).json({message:"Invalid token"});
 }
 req.userId=decoded.userId;
-} catch (error) {
-    res.status(401).json({message:"Unauthorized"})
-}
 next();
+} catch (error) {
+  return   res.status(401).json({message:"Unauthorized"})
+}
+
 }

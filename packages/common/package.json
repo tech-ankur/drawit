@@ -17,6 +17,7 @@
     "@repo/typescript-config": "workspace:*"
   },
   "dependencies": {
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@repo/db": "workspace:*"
   }
 }
