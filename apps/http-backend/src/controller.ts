@@ -102,3 +102,28 @@ export const roomcontroller =async (req:CustomRequest,res:Response)=>{
     return res.json({error:"Internal server error"});
   }
 }
+
+export const chatcontroller =async (req:CustomRequest,res:Response)=>{
+    try {
+        const roomId = Number(req.params.roomId);
+        console.log(req.params.roomId);
+        const messages = await prismaClient.chat.findMany({
+            where: {
+                roomId: roomId
+            },
+            orderBy: {
+                id: "desc"
+            },
+            take: 1000
+        });
+
+        res.json({
+            messages
+        })
+    } catch(e) {
+        console.log(e);
+        res.json({
+            messages: []
+        })
+    }
+}
