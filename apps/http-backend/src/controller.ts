@@ -127,3 +127,27 @@ export const chatcontroller =async (req:CustomRequest,res:Response)=>{
         })
     }
 }
+
+export const slugcontroller =async (req:CustomRequest,res:Response)=>{
+    try {
+        const slug = req.params.slug;
+       if(typeof slug !== "string"){
+        res.status(400).json({error:"Invalid slug"});
+        return;
+       }
+        const messages = await prismaClient.room.findUnique({
+            where: {
+                slug:slug
+            }
+           
+        });
+
+        res.json({
+            messages
+        })
+    } catch(e) {     
+        res.json({
+            messages: e
+        })
+    }
+}
