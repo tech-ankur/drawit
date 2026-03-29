@@ -1,7 +1,8 @@
 import express, { request } from 'express';
-import {JWT_SECRET} from '@repo/backend-common/config';
 import userrouter from './router.js';
+import cors from "cors" 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use("/api",userrouter);
 

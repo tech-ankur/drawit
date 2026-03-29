@@ -93,11 +93,15 @@ export const roomcontroller =async (req:CustomRequest,res:Response)=>{
     }
   const room=  await prismaClient.room.create({
         data:{
-           slug:parsedData.data.name,
+           slug:parsedData.data.slug,
            adminId:userId
         }
     })
-    return res.json({roomid:room.id})
+    return res.json({room: {
+    id: room.id,
+    slug: room.slug,
+    createdAt: room.createdAt,
+  }})
   } catch (error) {
     return res.json({error:"Internal server error"});
   }
@@ -151,3 +155,35 @@ export const slugcontroller =async (req:CustomRequest,res:Response)=>{
         })
     }
 }
+export const deletecontroller=async (req:Request,res:Response)=>{
+    const id=Number(req.params.id);
+    prismaClient.chat.delete({
+        where:{
+            id
+        }
+    })
+}
+
+export const getrooms = async (req: CustomRequest, res: Response) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+        const rooms = await prismaClient.room.findMany({
+            where: {
+                adminId:userId
+            }
+        });
+
+        return res.json({
+  rooms: rooms.map(room => ({
+    id: room.id,
+    slug: room.slug,
+    createdAt: room.createdAt
+  }))
+});
+    } catch (error) {
+        return res.status(500).json({ message: "Something went wrong" });
+    }
+};

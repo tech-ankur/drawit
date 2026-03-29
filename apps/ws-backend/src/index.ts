@@ -118,7 +118,9 @@ wss.on("connection", (ws, req) => {
    * Message handler
    */
   ws.on("message", async (data) => {
+    console.log("Received:", data.toString());
     try {
+      console.log("Received:", data.toString());
       const parsedData = JSON.parse(data.toString());
 
       switch (parsedData.type) {
