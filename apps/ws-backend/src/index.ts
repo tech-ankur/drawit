@@ -132,7 +132,7 @@ wss.on("connection", (ws: any, req) => {
   /**
    * Message handler
    */
-  ws.on("message", async (data) => {
+  ws.on("message", async (data:any) => {
     try {
       const parsedData = JSON.parse(data.toString());
 
