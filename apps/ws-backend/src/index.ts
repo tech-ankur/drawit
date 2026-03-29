@@ -3,7 +3,11 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { prismaClient } from "@repo/db/client";
 
-const wss = new WebSocketServer({ port: 8080 });
+/**
+ * DEPLOYMENT FIX 1: Render dynamic port
+ */
+const port = Number(process.env.PORT) || 8080;
+const wss = new WebSocketServer({ port });
 
 interface User {
   userId: string;
@@ -13,8 +17,24 @@ interface User {
 /**
  * Maps for O(1) lookups
  */
-const users = new Map<WebSocket, User>();          // ws -> user
+const users = new Map<WebSocket, User>();       // ws -> user
 const rooms = new Map<number, Set<WebSocket>>();   // roomId -> sockets
+
+/**
+ * DEPLOYMENT FIX 2: Heartbeat Logic
+ * Prevents Render from killing the connection after 5 minutes of silence.
+ */
+const interval = setInterval(() => {
+  wss.clients.forEach((ws: any) => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping(); 
+  });
+}, 30000);
+
+wss.on("close", () => {
+  clearInterval(interval);
+});
 
 /**
  * Verify JWT
@@ -22,10 +42,8 @@ const rooms = new Map<number, Set<WebSocket>>();   // roomId -> sockets
 function checkUser(token: string): string | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-
     if (typeof decoded === "string") return null;
     if (!decoded?.userId) return null;
-
     return decoded.userId;
   } catch {
     return null;
@@ -47,13 +65,10 @@ async function validateRoom(roomId: number) {
 function joinRoom(ws: WebSocket, roomId: number) {
   const user = users.get(ws);
   if (!user) return;
-
   user.rooms.add(roomId);
-
   if (!rooms.has(roomId)) {
     rooms.set(roomId, new Set());
   }
-
   rooms.get(roomId)!.add(ws);
 }
 
@@ -63,10 +78,8 @@ function joinRoom(ws: WebSocket, roomId: number) {
 function leaveRoom(ws: WebSocket, roomId: number) {
   const user = users.get(ws);
   if (!user) return;
-
   user.rooms.delete(roomId);
   rooms.get(roomId)?.delete(ws);
-
   if (rooms.get(roomId)?.size === 0) {
     rooms.delete(roomId);
   }
@@ -78,9 +91,7 @@ function leaveRoom(ws: WebSocket, roomId: number) {
 function broadcastToRoom(roomId: number, payload: any) {
   const roomUsers = rooms.get(roomId);
   if (!roomUsers) return;
-
   const message = JSON.stringify(payload);
-
   roomUsers.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
@@ -91,7 +102,11 @@ function broadcastToRoom(roomId: number, payload: any) {
 /**
  * Handle new connections
  */
-wss.on("connection", (ws, req) => {
+wss.on("connection", (ws: any, req) => {
+  // Setup for Heartbeat
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
   try {
     const url = req.url;
     const params = new URLSearchParams(url?.split("?")[1]);
@@ -118,33 +133,26 @@ wss.on("connection", (ws, req) => {
    * Message handler
    */
   ws.on("message", async (data) => {
-    console.log("Received:", data.toString());
     try {
-      console.log("Received:", data.toString());
       const parsedData = JSON.parse(data.toString());
 
       switch (parsedData.type) {
-
         case "join_room": {
           const roomId = Number(parsedData.roomId);
           if (!roomId) {
             ws.send(JSON.stringify({ type: "error", message: "Invalid roomId" }));
             return;
           }
-
           const roomExists = await validateRoom(roomId);
           if (!roomExists) {
             ws.send(JSON.stringify({ type: "error", message: "Room not found" }));
             return;
           }
-
           joinRoom(ws, roomId);
-
           ws.send(JSON.stringify({
             type: "joined_room",
             roomId
           }));
-
           break;
         }
 
@@ -157,10 +165,8 @@ wss.on("connection", (ws, req) => {
         case "chat": {
           const roomId = Number(parsedData.roomId);
           const message = parsedData.message;
-
           const user = users.get(ws);
           if (!user) return;
-
           if (!user.rooms.has(roomId)) {
             ws.send(JSON.stringify({
               type: "error",
@@ -185,7 +191,6 @@ wss.on("connection", (ws, req) => {
             message,
             userId: user.userId
           });
-
           break;
         }
 
@@ -221,3 +226,5 @@ wss.on("connection", (ws, req) => {
     users.delete(ws);
   });
 });
+
+console.log(`WebSocket server started on port ${port}`);

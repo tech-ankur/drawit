@@ -1,21 +1,26 @@
-{"$schema": "https://turborepo.dev/schema.json",
+{
+  "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
   "tasks": {
     "generate": {
       "cache": false,
-      "inputs": ["**/*.prisma"],
-      "outputs": []
+      "inputs": ["packages/db/prisma/schema.prisma"],
+      "outputs": ["node_modules/.prisma/client/**"]
     },
     "build": {
       "dependsOn": ["^build", "generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "env": [
-        "NEXT_PUBLIC_HTTP_URL", 
-        "NEXT_PUBLIC_WS_URL", 
         "DATABASE_URL",
-        "JWT_SECRET"
+        "JWT_SECRET",
+        "NEXT_PUBLIC_HTTP_URL",
+        "NEXT_PUBLIC_WS_URL"
       ]
+    },
+    "db:push": {
+      "cache": false,
+      "inputs": ["packages/db/prisma/schema.prisma"]
     },
     "lint": {
       "dependsOn": ["^lint"]
