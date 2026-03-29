@@ -79,7 +79,7 @@ const Page = () => {
       {showCreate && (
         <CreateRoom
           onClose={() => setShowCreate(false)}
-          onCreated={(newRoom) =>
+          onCreated={(newRoom:any) =>
             setRooms((prev) => [...prev, newRoom])
           }
         />
