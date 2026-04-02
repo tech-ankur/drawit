@@ -176,7 +176,7 @@ wss.on("connection", (ws: any, req) => {
           }
 
           // Store message in DB
-          await prismaClient.chat.create({
+        const response =  await prismaClient.chat.create({
             data: {
               roomId,
               message,
@@ -186,9 +186,36 @@ wss.on("connection", (ws: any, req) => {
 
           // Broadcast
           broadcastToRoom(roomId, {
+            id:response.id,
             type: "chat",
             roomId,
             message,
+            userId: user.userId
+          });
+          break;
+        }
+        case "delete": {
+          const roomId = Number(parsedData.roomId);
+          const id= Number(parsedData.id);
+          const user = users.get(ws);
+          if (!user) return;
+          if (!user.rooms.has(roomId)) {
+            ws.send(JSON.stringify({
+              type: "error",
+              message: "Join room first"
+            }));
+            return;
+          }
+          // Delete message from DB
+        const response=  await prismaClient.chat.delete({
+            where: {
+              id
+            }
+          });
+           broadcastToRoom(roomId, {
+            id:response.id,
+            type: "delete",
+            roomId,
             userId: user.userId
           });
           break;

@@ -1,37 +1,31 @@
 "use client";
 
-import { HTTP_URL } from "@/config";
-import axios from "axios";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { HTTP_URL } from "@/config";
 
-const CreateRoom = ({ onClose, onCreated }: any) => {
+const JoinRoom = ({ onClose }: any) => {
   const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
-const navigate = useRouter();
-  const handleCreate = async () => {
+  const router = useRouter();
+
+  const handleJoin = async () => {
     if (!slug.trim()) return;
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
 
-      const res = await axios.post(
-        `${HTTP_URL}/api/room`,
-        { slug },
-        {
-          headers: {
-            Authorization: token,
-          },
-        }
-      );
+      await axios.get(`${HTTP_URL}/api/room/${slug}`, {
+        headers: {
+          Authorization: localStorage.getItem("token") || "",
+        },
+      });
 
-      onCreated(res.data.room);
-      navigate.push(`/canvas/${res.data.room.slug}`);
-      
-     
-    } catch (err) {
-      console.error(err);
+      router.push(`/canvas/${slug}`);
+      onClose();
+    } catch {
+      alert("Room not found");
     } finally {
       setLoading(false);
     }
@@ -46,7 +40,7 @@ const navigate = useRouter();
         className="bg-[#111111] border border-[#222] text-white p-6 rounded-2xl w-96 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold mb-4">Create New Room</h2>
+        <h2 className="text-xl font-semibold mb-4">Join Room</h2>
 
         <input
           type="text"
@@ -55,7 +49,7 @@ const navigate = useRouter();
           onChange={(e) => setSlug(e.target.value)}
           className="w-full bg-black border border-[#333] focus:border-[#6F8F76] p-3 rounded-lg outline-none mb-4"
           autoFocus
-          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+          onKeyDown={(e) => e.key === "Enter" && handleJoin()}
         />
 
         <div className="flex justify-end gap-3">
@@ -67,7 +61,7 @@ const navigate = useRouter();
           </button>
 
           <button
-            onClick={handleCreate}
+            onClick={handleJoin}
             disabled={loading}
             className={`px-4 py-2 rounded-lg ${
               loading
@@ -75,7 +69,7 @@ const navigate = useRouter();
                 : "bg-[#6F8F76] hover:bg-[#5f7c66] text-black"
             }`}
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "Joining..." : "Join"}
           </button>
         </div>
       </div>
@@ -83,4 +77,4 @@ const navigate = useRouter();
   );
 };
 
-export default CreateRoom;
+export default JoinRoom;

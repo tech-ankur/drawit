@@ -1,21 +1,43 @@
+"use client";
+
 import RoomCanvas from "@/components/Roomcanvas";
 import { HTTP_URL } from "@/config";
 import axios from "axios";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation"; // ✅ IMPORTANT
 
-// async function getRoomId(slug:string){
-//    const response = await axios.get(`${HTTP_URL}/api/room/${slug}`, {
-//   headers: {
-//     Authorization: `Bearer ${localStorage.getItem("token")}`
-//   }
-// });
-//     return response.data.room.id
-// }
-const CanvasPage = async ({params}:{params:{slug:string}}) => {
-  
-    const slug=(await params).slug;
-    // const roomId=await getRoomId(slug)
-    // console.log("roomId",roomId)  
-    return <RoomCanvas roomId={slug}/>
-}
+const CanvasPage = () => {
+  const [roomid, setRoomId] = useState("");
+  const params = useParams();
 
-export default CanvasPage
+  const slug = params.slug as string; // ✅ safe cast
+
+  useEffect(() => {
+    async function getRoomId() {
+      try {
+        const response = await axios.get(
+          `${HTTP_URL}/api/room/${slug}`,
+          {
+            headers: {
+              Authorization: localStorage.getItem("token") || "",
+            },
+          }
+        );
+
+        console.log("API response:", response.data);
+
+        setRoomId(response.data.messages?.id.toString());
+      } catch (err) {
+        console.error("Error fetching room:", err);
+      }
+    }
+
+    if (slug) getRoomId(); // ✅ avoid undefined
+  }, [slug]);
+
+  if (!roomid) return <div>Loading...</div>;
+
+  return <RoomCanvas roomId={roomid} />;
+};
+
+export default CanvasPage;
