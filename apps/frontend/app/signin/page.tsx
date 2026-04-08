@@ -25,9 +25,6 @@ export default function Page() {
 
       // store token
       localStorage.setItem("token", token);
-
-      alert("Signin successful");
-
       router.push("/dashboard");
 
     } catch (err: any) {

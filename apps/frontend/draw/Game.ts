@@ -28,7 +28,7 @@ export class Game {
   private panStartX = 0;
   private panStartY = 0;
 
-  private selectedTool: Tool = "circle";
+  private selectedTool: Tool = "hand";
 
   private viewportTransform = {
     x: 0,
@@ -53,6 +53,7 @@ export class Game {
 
   setTool(tool: Tool) {
     this.selectedTool = tool;
+    console.log("Game Tool Updated to:", this.selectedTool);
   }
 createTextInput(x: number, y: number) {
   const input = document.createElement("textarea");
@@ -62,7 +63,8 @@ createTextInput(x: number, y: number) {
   input.style.position = "absolute";
   input.style.left = `${rect.left + x}px`;
   input.style.top = `${rect.top + y}px`;
-
+input.style.transformOrigin = "top left";
+  input.style.transform = `scale(${this.viewportTransform.scale})`;
   input.style.font = "20px Arial";
   input.style.color = "white";
   input.style.background = "black"; // 👈 important (you were using transparent)
@@ -193,27 +195,26 @@ isPointInsideShape(x: number, y: number, shape: Shape) {
 
   // ✅ ADD THIS BLOCK
   else if (shape.type === "text") {
-    this.ctx.font = "20px Arial";
+  this.ctx.font = "20px Arial";
+  const lines = (shape.text || "").split("\n");
+  const lineHeight = 24;
+  
+  // Calculate max width across all lines
+  const maxWidth = lines.reduce((max, line) => {
+    return Math.max(max, this.ctx.measureText(line).width);
+  }, 0);
 
-    const lines = (shape.text || "").split("\n");
-    const lineHeight = 24;
+  const totalHeight = lines.length * lineHeight;
 
-    let maxWidth = 0;
-
-    lines.forEach((line) => {
-      const metrics = this.ctx.measureText(line);
-      maxWidth = Math.max(maxWidth, metrics.width);
-    });
-
-    const totalHeight = lines.length * lineHeight;
-
-    return (
-      x >= shape.x &&
-      x <= shape.x + maxWidth &&
-      y >= shape.y &&
-      y <= shape.y + totalHeight
-    );
-  }
+  // Add a 5px padding buffer for easier selection
+  const buffer = 5;
+  return (
+    x >= shape.x - buffer &&
+    x <= shape.x + maxWidth + buffer &&
+    y >= shape.y - buffer &&
+    y <= shape.y + totalHeight + buffer
+  );
+}
 
   return false;
 }
@@ -271,7 +272,8 @@ distanceToLine(px: number, py: number, x1: number, y1: number, x2: number, y2: n
     // 3. Background
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
+    this.ctx.strokeStyle = "white";
+    this.ctx.save();
     // 4. Apply transform
     this.ctx.setTransform(
       this.viewportTransform.scale,
@@ -283,7 +285,7 @@ distanceToLine(px: number, py: number, x1: number, y1: number, x2: number, y2: n
     );
 
     // 5. Draw shapes
-    this.ctx.strokeStyle = "white";
+    
 
     this.existingshapes.forEach((shape) => {
       if (shape.type === "rect") {
@@ -323,6 +325,7 @@ lines.forEach((line, index) => {
       }
     
     });
+    this.ctx.restore();
   }
 
   // ✅ Smooth zoom
@@ -367,8 +370,8 @@ lines.forEach((line, index) => {
           roomId: Number(this.roomId),
           id: shape.id,
         }));
-
-        return; // stop after delete
+        break;
+        
       }
     }
 
@@ -448,8 +451,12 @@ const metrics = this.ctx.measureText(value);
 });
     // 🟢 MOUSEMOVE
     this.canvas.addEventListener("mousemove", (e) => {
-      if (!this.clicked) return;
-
+       if (!this.clicked) return;
+    console.log("Current Tool:", this.selectedTool);
+      if (this.selectedTool === "delete" || this.selectedTool === "text") {
+    return;
+  }
+   
       // ✋ PANNING
       if (this.selectedTool === "hand") {
         const dx = e.clientX - this.panStartX;
@@ -509,7 +516,7 @@ const metrics = this.ctx.measureText(value);
   this.selectedTool === "hand" ||
   this.selectedTool === "delete" ||
   this.selectedTool === "text"   
-) return; 
+){ return}; 
 
   const { x, y } = this.getWorldCoordinates(e.clientX, e.clientY);
 

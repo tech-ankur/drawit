@@ -23,7 +23,7 @@ export default function Page() {
         password: data.password
       });
 
-      alert(res.data.message);
+     
 
       router.push("/signin");
 

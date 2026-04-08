@@ -98,7 +98,7 @@ export default function Page() {
 
       {/* Footer */}
       <footer className="text-center py-8 text-gray-500 border-t border-gray-800">
-        © 2026 MyApp. All rights reserved.
+        © 2026 Drawit. All rights reserved.
       </footer>
 
     </div>

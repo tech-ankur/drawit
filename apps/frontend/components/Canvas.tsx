@@ -13,18 +13,23 @@ const Canvas = ({roomId,socket}:canvaprop) => {
       const gameRef = useRef<Game | null>(null)
       const [selectedTool,setSelectedTool]=useState<Tool>("hand")
 
-useEffect(()=>{
-    gameRef.current?.setTool(selectedTool);
-  }
-  ,[selectedTool]
-)
 
 useEffect(() => {
-    if(canvasRef.current){
-      gameRef.current=new Game(canvasRef.current,roomId,socket);
-  
+    if (canvasRef.current && !gameRef.current) {
+      const g = new Game(canvasRef.current, roomId, socket);
+      gameRef.current = g;
+      
+      // Set the initial tool immediately after creation
+      g.setTool(selectedTool);
     }
-}, []);
+  }, [roomId, socket]);
+
+  useEffect(() => {
+    if (gameRef.current) {
+      gameRef.current.setTool(selectedTool);
+    }
+  }, [selectedTool]);
+
   return (
     <div className='h-screen overflow-hidden'>
       <canvas ref={canvasRef} width={window.innerWidth} height={window.innerHeight} style={{ background: "black" }} />

@@ -1,12 +1,12 @@
 "use client";
 
 import CreateRoom from "@/components/Createroom";
-
 import { HTTP_URL } from "@/config";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import JoinRoom from "@/components/Joinroom";
+import { LogOut } from "lucide-react"; // Optional: adding an icon
 
 interface Room {
   id: string | number;
@@ -24,6 +24,12 @@ const Page = () => {
     async function getRooms() {
       try {
         const token = localStorage.getItem("token");
+        // Redirect if no token exists
+        if (!token) {
+          router.push("/signin");
+          return;
+        }
+
         const res = await axios.get(`${HTTP_URL}/api/rooms`, {
           headers: {
             Authorization: token,
@@ -35,7 +41,13 @@ const Page = () => {
       }
     }
     getRooms();
-  }, []);
+  }, [router]);
+
+  // ✅ Logout Handler
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/"); // or wherever your login page is
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -50,19 +62,28 @@ const Page = () => {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Your Rooms</h1>
 
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setShowJoin(true)}
-            className="bg-[#111111] border border-[#333] hover:border-[#6F8F76] text-[#E5E5E5] px-5 py-2 rounded-xl transition"
+            className="cursor-pointer bg-[#111111] border border-[#333] hover:border-[#6F8F76] text-[#E5E5E5] px-5 py-2 rounded-xl transition"
           >
             Join Room
           </button>
 
           <button
             onClick={() => setShowCreate(true)}
-            className="bg-[#6F8F76] hover:bg-[#5f7c66] text-black px-5 py-2 rounded-xl transition shadow-md"
+            className="cursor-pointer bg-[#6F8F76] hover:bg-[#5f7c66] text-black px-5 py-2 rounded-xl transition shadow-md"
           >
             Create Room
+          </button>
+
+          {/* ✅ Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="cursor-pointer flex items-center gap-2 bg-transparent border border-red-900/50 hover:bg-red-950/30 text-red-500 px-4 py-2 rounded-xl transition ml-2"
+          >
+            <LogOut size={18} />
+            Logout
           </button>
         </div>
       </div>
@@ -99,7 +120,6 @@ const Page = () => {
       {/* 🔹 Create Room Modal */}
       {showCreate && (
         <CreateRoom
-        
           onCreated={(room: Room) => {
             setRooms((prev) => [...prev, room]);
             setShowCreate(false);
@@ -108,9 +128,7 @@ const Page = () => {
       )}
 
       {/* 🔹 Join Room Modal */}
-      {showJoin && (
-        <JoinRoom onClose={() => setShowJoin(false)} />
-      )}
+      {showJoin && <JoinRoom onClose={() => setShowJoin(false)} />}
     </div>
   );
 };
