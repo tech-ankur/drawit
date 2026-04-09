@@ -273,7 +273,7 @@ distanceToLine(px: number, py: number, x1: number, y1: number, x2: number, y2: n
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.strokeStyle = "white";
-    this.ctx.save();
+   
     // 4. Apply transform
     this.ctx.setTransform(
       this.viewportTransform.scale,
