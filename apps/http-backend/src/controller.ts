@@ -102,9 +102,17 @@ export const roomcontroller =async (req:CustomRequest,res:Response)=>{
     slug: room.slug,
     createdAt: room.createdAt,
   }})
-  } catch (error) {
-    return res.json({error:"Internal server error"});
+  } catch (error: any) {
+  if (error.code === "P2002") {
+    return res.status(409).json({
+      error: "Room with this name already exists"
+    });
   }
+
+  return res.status(500).json({
+    error: "Internal server error"
+  });
+}
 }
 
 export const chatcontroller =async (req:CustomRequest,res:Response)=>{
