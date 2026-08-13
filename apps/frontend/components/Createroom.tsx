@@ -30,9 +30,15 @@ const navigate = useRouter();
       navigate.push(`/canvas/${res.data.room.slug}`);
       
      
-    } catch (err) {
-      console.error(err);
-    } finally {
+    } catch (err: any) {
+  console.error(err);
+
+  if (axios.isAxiosError(err)) {
+    alert(err.response?.data?.error || "Failed to create room");
+  } else {
+    alert("Something went wrong");
+  }
+} finally {
       setLoading(false);
     }
   };
